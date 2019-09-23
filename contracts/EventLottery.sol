@@ -9,7 +9,6 @@ contract EventLottery is Ownable {
   struct Player {
     address addr; // address
     uint32 member_srl; // member_srl of player
-    uint32 regdate; // registered date
   }
 
   Player[] public Applicants;
@@ -35,11 +34,10 @@ contract EventLottery is Ownable {
     require(AddressToMemberSrl[_address] == 0);
 
     uint32 userId;
-    uint32 regdate = uint32(now);
 
     MemberSrlToAddress[_member_srl] = _address;
     AddressToMemberSrl[_address] = _member_srl;
-    uint id = Applicants.push(Player(_address, _member_srl, regdate));
+    uint id = Applicants.push(Player(_address, _member_srl));
     userId = uint32(id);
 
     AddressToApplicant[_address] = userId;
@@ -48,24 +46,17 @@ contract EventLottery is Ownable {
   }
 
   // sending Eth to enter lottery: payable function type
-  function verify() public payable {
+  function verify() public {
     require(msg.sender.balance >= 1000 ether); // player's balnce >= 1000 ether
     require(AddressToApplicant[msg.sender] != 0);
-    require(address(this).balance > 0.1 ether);
 
     uint32 member_srl = AddressToMemberSrl[msg.sender];
     require(member_srl > 0);
 
     uint32 id = AddressToApplicant[msg.sender] - 1;
 
-    Player memory player = Applicants[id];
-
-    player.regdate = uint32(now);
-    uint uid = VerifiedPlayers.push(player);
+    uint uid = VerifiedPlayers.push(Applicants[id]);
     AddressToPlayer[msg.sender] = uint32(uid);
-
-    // send back value
-    msg.sender.transfer(msg.value);
 
     emit onVerifyApplicant(msg.sender);
   }
